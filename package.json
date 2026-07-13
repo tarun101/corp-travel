@@ -1,0 +1,27 @@
+{
+  "name": "google-flights-policy-booking-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that searches Google Flights, checks results against a travel policy file, and best-effort fills traveler details up to (but never past) payment.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:remote": "node dist/remoteServer.js",
+    "install-browser": "playwright install chromium"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "playwright": "^1.61.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "dateOfBirth": "1990-05-14",
+  "gender": "F",
+  "email": "jane.doe@example.com",
+  "phone": "+1-555-010-2000",
+  "frequentFlyerNumber": "",
+  "knownTravelerNumber": ""
+}

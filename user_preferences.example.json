@@ -1,0 +1,10 @@
+{
+  "name": "Tarun's Travel Preferences",
+  "optimizeFor": "balanced",
+  "preferNonstop": true,
+  "preferredAlliance": "star_alliance",
+  "avoidRedEye": true,
+  "redEyeWindow": { "departAfter": "22:00", "departBefore": "05:00" },
+  "preferEarlyMorning": false,
+  "earlyMorningWindow": { "start": "05:00", "end": "09:00" }
+}

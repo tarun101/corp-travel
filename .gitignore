@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.booking-screenshots/
+*.log
+.DS_Store
+policy.json
+user_preferences.json
+scratch-*
+.cloud-run-bearer-token.txt
+.claude/

@@ -1,0 +1,23 @@
+{
+  "name": "Routespring Standard Travel Policy",
+  "currency": "USD",
+  "maxFare": {
+    "domestic": 600,
+    "international": 2500
+  },
+  "allowedCabin": {
+    "domestic": ["economy", "premium_economy"],
+    "international": ["economy", "premium_economy", "business"],
+    "longHaulBusinessThresholdHours": 6
+  },
+  "maxStops": 1,
+  "minAdvancePurchaseDays": 3,
+  "preferredAirlines": ["United", "Delta", "American"],
+  "blockedAirlines": [],
+  "refundableRequired": false,
+  "departureTimeWindow": {
+    "earliest": "05:00",
+    "latest": "23:00"
+  },
+  "requireApprovalAboveFare": 1000
+}
