@@ -40,7 +40,23 @@ penalized, not hidden), so you can see what got filtered and why. The
 actually complete the booking — this server never visits an airline site
 itself.
 
-## Example 2: checking what's active
+## Example 2: comparing every weekend in a month
+
+> "Search for the same flights for every weekend to weekend in next month
+> and find me the cheapest option"
+
+There's no built-in "scan a date range" tool — the assistant handles this by
+enumerating each weekend-to-weekend pairing in the target month itself (e.g.
+every Friday→Sunday or Saturday→Saturday), calling
+`search_and_recommend_flights` once per pairing with the same origin,
+destination, and cabin, then comparing the cheapest result across all of
+them. You get back a single overall answer (which weekend, which flight,
+what it costs) rather than a pile of raw per-call output — worth knowing
+this costs one Google Flights search per weekend under the hood, so a
+four-weekend month means four calls, each with its own ~1-2s browser-startup
+cost (see [advanced-usage.md](advanced-usage.md#known-limitations-read-before-relying-on-this)).
+
+## Example 3: checking what's active
 
 > "What policy is this using?"
 
@@ -48,7 +64,7 @@ Calls `get_active_config` and returns the fare caps, cabin rules, and
 preferences currently in effect — useful before trusting a result, or before
 handing this to someone else to try.
 
-## Example 3: using your own policy for one call
+## Example 4: using your own policy for one call
 
 > "Use my policy.json for this search instead"
 
@@ -60,7 +76,7 @@ colleagues share one deployed server without stepping on each other's
 config; see [advanced-usage.md](advanced-usage.md) for the full schema and
 pattern.
 
-## Example 4: booking (local server only)
+## Example 5: booking (local server only)
 
 > "Book the United flight"
 
