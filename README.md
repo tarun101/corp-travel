@@ -13,96 +13,54 @@ There's also a local, browser-driven server in this repo that *can* drive a
 booking up to (but never through) payment — see
 [local-server/README.md](local-server/README.md).
 
-## Install
+## Connect it to claude.ai
 
-```bash
-npm install
-npm run install-browser   # downloads a Chromium build for Playwright
-npm run build
-cp policy.example.json policy.json
-cp user_preferences.example.json user_preferences.json
-MCP_BEARER_TOKEN=some-long-random-secret npm run start:remote
-```
+You need a running instance first — either one a colleague/admin already
+deployed (get the URL and credentials from them), or your own: see
+[docs/advanced-build.md](docs/advanced-build.md) for deploying (Docker,
+Fly.io/Render/Cloud Run).
 
-The server refuses to start without `MCP_BEARER_TOKEN` — there's no
-unauthenticated mode. It listens on `PORT` (default `8080`) at `POST /mcp`.
+Once you have a URL:
 
-To connect it from claude.ai (or deploy it first — Docker, Cloud Run, Google
-OAuth for per-person sign-in), see
-[docs/advanced-build.md](docs/advanced-build.md).
+1. In claude.ai, go to **Settings → Connectors → Add custom connector**.
+2. **URL**: `https://<your-deployment>/mcp`
+3. **Auth** — claude.ai offers two options, both supported:
+   - **Username/password**: any username, password = the deployment's
+     `MCP_BEARER_TOKEN`. Fastest to set up, one shared secret for everyone.
+   - **OAuth**: real per-person "Sign in with Google," restricted to an
+     email domain allowlist — each colleague gets their own login instead
+     of sharing a secret. Requires one-time setup in Google Cloud Console;
+     see [docs/advanced-build.md](docs/advanced-build.md#google-oauth-per-person-sign-in).
+4. Save. claude.ai should confirm the connection — try asking it to find a
+   flight (see [docs/examples.md](docs/examples.md)).
 
-## Usage
+## Change the default policy & config
 
-No special syntax — just ask in plain language and the model calls the right
-tool.
+Two files drive every recommendation: **policy** (hard/soft rules — fare
+caps, cabin class, blocked airlines) and **preferences** (personal taste —
+nonstop, alliance, cheapest vs. fastest). Full schema for both:
+[docs/advanced-usage.md](docs/advanced-usage.md).
 
-**Example 1:**
-
-> "Find me a flight from DC to Delhi, Aug 1st to Aug 8th, economy"
-
-```json
-{
-  "route": "Washington, D.C. → Delhi",
-  "policyUsed": "Routespring Standard Travel Policy",
-  "googleFlightsUrl": "https://www.google.com/travel/flights/search?tfs=...",
-  "totalFound": 11,
-  "compliantCount": 5,
-  "flights": [
-    {
-      "flight": { "airline": "United", "price": 1807, "stops": 1, "durationMinutes": 1085, "...": "..." },
-      "policyCompliant": true,
-      "requiresApproval": true,
-      "score": 57.2,
-      "labels": ["🏆 Best Match", "✅ In Policy", "⚠️ Needs Approval", "🔁 1 stop", "⭐ star alliance"],
-      "scoreBreakdown": [
-        { "label": "In policy", "delta": 40 },
-        { "label": "Requires approval", "delta": -10 },
-        { "label": "star_alliance match", "delta": 15 },
-        { "label": "Duration 1085min (of 1085-1688 range)", "delta": 20 }
-      ]
-    }
-  ]
-}
-```
-
-Every flight carries a plain-English label set and a numeric `scoreBreakdown`
-— you can see exactly why the top result ranked where it did, not just trust
-a black-box order. Out-of-policy flights are still returned (heavily
-penalized, not hidden), so you can see what got filtered and why. The
-`googleFlightsUrl` reproduces the exact search on Google Flights for you to
-actually complete the booking — this server never visits an airline site
-itself.
-
-**Example 2:**
-
-> "What policy is this using?"
-
-Calls `get_active_config` and returns the fare caps, cabin rules, and
-preferences currently in effect — useful before trusting a result, or before
-handing this to someone else to try.
-
-**Bring your own policy:** if you keep a personal `policy.json` /
-`user_preferences.json` (different fare caps, different airline
-preferences), mention it and the assistant will read it and pass it as
-`policyOverride`/`preferencesOverride` for that call — this is also how
-multiple colleagues use the same deployed server with different policies
-without stepping on each other. See
-[docs/advanced-usage.md](docs/advanced-usage.md) for the full schema and
-pattern.
-
-## Safety boundary
-
-This server has no code path that can reach an airline site, a
-traveler-detail form, or a payment field — `selectFlightForBooking` /
-`continueToBookingOption` / `autofillTravelerDetails` aren't imported here at
-all. Not a runtime check to bypass; the capability simply isn't wired in.
-Details in [docs/advanced-usage.md](docs/advanced-usage.md#safety-boundary-remote-server).
+- **Change the deployment's default** — edit `policy.json` /
+  `user_preferences.json` and redeploy, or set the `POLICY_JSON` /
+  `PREFERENCES_JSON` env vars directly (no rebuild needed). This changes
+  results for *everyone* using that deployment — see
+  [docs/advanced-build.md](docs/advanced-build.md#deploying) for exact
+  commands.
+- **Use your own policy without changing the shared default** — keep a
+  personal `policy.json` / `user_preferences.json` and just mention it
+  ("use my policy for this"); the assistant reads it and passes it in for
+  that call only. This is also how multiple colleagues share one deployment
+  with different policies — see
+  [docs/advanced-usage.md](docs/advanced-usage.md#multiple-colleagues-different-policies).
 
 ## More
 
+- [docs/examples.md](docs/examples.md) — worked examples: a search, checking
+  the active policy, bringing your own policy, booking.
 - [local-server/README.md](local-server/README.md) — the browser-driven
   server that can autofill a booking up to payment.
-- [docs/advanced-build.md](docs/advanced-build.md) — deploying (Docker,
-  Fly.io/Render/Cloud Run), Google OAuth for per-person sign-in.
+- [docs/advanced-build.md](docs/advanced-build.md) — deploying, Google OAuth
+  setup, running it locally.
 - [docs/advanced-usage.md](docs/advanced-usage.md) — full policy/preferences
-  schema, the multi-colleague pattern, known limitations.
+  schema, the multi-colleague pattern, known limitations, safety boundary.
