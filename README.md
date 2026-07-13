@@ -15,24 +15,27 @@ booking up to (but never through) payment — see
 
 ## Connect it to claude.ai
 
-You need a running instance first — either one a colleague/admin already
-deployed (get the URL and credentials from them), or your own: see
-[docs/advanced-build.md](docs/advanced-build.md) for deploying (Docker,
-Fly.io/Render/Cloud Run).
+The live deployment:
 
-Once you have a URL:
+```
+https://corp-travel-mcp-508362522869.us-central1.run.app/mcp
+```
 
 1. In claude.ai, go to **Settings → Connectors → Add custom connector**.
-2. **URL**: `https://<your-deployment>/mcp`
-3. **Auth** — claude.ai offers two options, both supported:
-   - **Username/password**: any username, password = the deployment's
-     `MCP_BEARER_TOKEN`. Fastest to set up, one shared secret for everyone.
-   - **OAuth**: real per-person "Sign in with Google," restricted to an
-     email domain allowlist — each colleague gets their own login instead
-     of sharing a secret. Requires one-time setup in Google Cloud Console;
-     see [docs/advanced-build.md](docs/advanced-build.md#google-oauth-per-person-sign-in).
-4. Save. claude.ai should confirm the connection — try asking it to find a
-   flight (see [docs/examples.md](docs/examples.md)).
+2. **URL**: paste the URL above.
+3. **Auth**: choose **OAuth**. Leave the Client ID / Client Secret fields
+   **blank** — this server supports dynamic client registration, so
+   claude.ai registers itself automatically; nothing to fill in by hand.
+4. Save. claude.ai will prompt you to connect — sign in with your
+   **`@routespring.com`** (or `@gallop.ai`) Google account. Any other
+   domain is rejected.
+5. Try asking it to find a flight (see [docs/examples.md](docs/examples.md)).
+
+Running your own separate deployment instead? See
+[docs/advanced-build.md](docs/advanced-build.md) for deploying it (Docker,
+Fly.io/Render/Cloud Run) and setting up your own Google OAuth client — or
+use the simpler username/password (Basic Auth) option claude.ai also offers,
+where the password is the deployment's `MCP_BEARER_TOKEN`.
 
 ## Change the default policy & config
 
