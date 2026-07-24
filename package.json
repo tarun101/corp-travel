@@ -1,7 +1,7 @@
 {
-  "name": "google-flights-policy-booking-mcp",
+  "name": "corp-travel-mcp",
   "version": "0.1.0",
-  "description": "MCP server that searches Google Flights, checks results against a travel policy file, and best-effort fills traveler details up to (but never past) payment.",
+  "description": "Corporate travel MCP that searches flights, applies travel policy, and ranks recommendations.",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -23,5 +23,9 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "@hono/node-server": "^2.0.5",
+    "fast-uri": "^3.1.4"
   }
 }

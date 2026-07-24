@@ -55,7 +55,7 @@ Add to your MCP config:
 ```json
 {
   "mcpServers": {
-    "google-flights-policy-booking": {
+    "corp-travel-local": {
       "command": "node",
       "args": ["dist/index.js"],
       "cwd": "/absolute/path/to/this/repo"

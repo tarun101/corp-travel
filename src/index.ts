@@ -10,7 +10,7 @@ import { autofillTravelerDetails, findNextActionButtons } from "./booking.js";
 import type { FlightOption, TravelerDetails } from "./types.js";
 
 const server = new McpServer({
-  name: "google-flights-policy-booking",
+  name: "corp-travel-local",
   version: "0.1.0",
 });
 

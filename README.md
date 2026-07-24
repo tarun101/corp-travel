@@ -1,4 +1,4 @@
-# Google Flights Policy Recommender (MCP)
+# Corp Travel MCP
 
 A remote MCP server that searches Google Flights, labels every result
 in-policy or out-of-policy against a travel policy file, and ranks them by
@@ -8,6 +8,11 @@ attempts to book anything: it hands you a ranked, labeled list and a Google
 Flights link to complete the booking yourself.
 
 Built as a technology demonstration of policy-aware flight recommendations.
+
+This repository is one of three independently deployed MCPs in the
+[`tarun-mcp-suite`](https://github.com/topics/tarun-mcp-suite), alongside
+[gsuite](https://github.com/tarun101/gsuite) and
+[simplefin](https://github.com/tarun101/simplefin).
 
 There's also a local, browser-driven server in this repo that *can* drive a
 booking up to (but never through) payment — see

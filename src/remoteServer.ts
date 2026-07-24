@@ -165,7 +165,7 @@ function trimRankedFlight(r: RankedFlight) {
 
 function getServer(): McpServer {
   const server = new McpServer({
-    name: "google-flights-recommender",
+    name: "corp-travel",
     version: "0.1.0",
   });
 
