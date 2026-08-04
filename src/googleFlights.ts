@@ -58,7 +58,11 @@ async function pickDate(page: Page, dateStr: string): Promise<void> {
 }
 
 export async function searchGoogleFlights(page: Page, params: SearchParams): Promise<FlightOption[]> {
-  await page.goto("https://www.google.com/travel/flights?hl=en", { waitUntil: "domcontentloaded" });
+  // Force the US edition + USD regardless of the server's IP geolocation. Without gl=us,
+  // an India-based IP gets the India edition (button labelled "Explore" not "Search", so
+  // the selectors below never match) and prices come back in INR, silently breaking the
+  // USD policy fare-cap comparison.
+  await page.goto("https://www.google.com/travel/flights?hl=en&gl=us&curr=USD", { waitUntil: "domcontentloaded" });
 
   // Trip type: Round trip is the default; switch to One way when no return date given.
   if (!params.returnDate) {
@@ -295,4 +299,87 @@ export async function continueToBookingOption(page: Page, buttonLabel: string): 
   const target = popup ?? page;
   await target.waitForLoadState("domcontentloaded", { timeout: 20_000 }).catch(() => {});
   return target;
+}
+
+// --- Google Flights deep-link (tfs) builder --------------------------------
+// The `tfs` query param is a base64url-encoded protobuf describing the search.
+// We construct it from the search params so the returned link is a clean,
+// self-contained deep link that restores the FULL search on a cold page load.
+//
+// Do NOT reuse the live scraping page's URL for this. Mid-session, Google
+// Flights carries ephemeral in-app state inside tfs (observed:
+// field 16 { field 1 = 0xFFFFFFFFFFFFFFFF } plus other session flags) that a
+// fresh, cookie-less load can't parse — so the link restores only the first
+// leg's origin and silently drops the destination and both dates.
+
+const SEAT_CODE: Record<CabinClass, number> = {
+  economy: 1,
+  premium_economy: 2,
+  business: 3,
+  first: 4,
+};
+
+function pbVarint(value: number): Buffer {
+  const bytes: number[] = [];
+  let v = value;
+  do {
+    let b = v & 0x7f;
+    v = Math.floor(v / 128);
+    if (v > 0) b |= 0x80;
+    bytes.push(b);
+  } while (v > 0);
+  return Buffer.from(bytes);
+}
+
+function pbVarintField(field: number, value: number): Buffer {
+  return Buffer.concat([pbVarint((field << 3) | 0), pbVarint(value)]);
+}
+
+function pbLenDelim(field: number, body: Buffer): Buffer {
+  return Buffer.concat([pbVarint((field << 3) | 2), pbVarint(body.length), body]);
+}
+
+function pbString(field: number, value: string): Buffer {
+  return pbLenDelim(field, Buffer.from(value, "utf-8"));
+}
+
+// A leg's endpoint: { field 1 = 1 (airport, not a broader city/region), field 2 = IATA code }
+function tfsEndpoint(code: string): Buffer {
+  return Buffer.concat([pbVarintField(1, 1), pbString(2, code)]);
+}
+
+// One flight leg: { field 2 = date, field 13 = from, field 14 = to }
+function tfsLeg(date: string, from: string, to: string): Buffer {
+  return Buffer.concat([pbString(2, date), pbLenDelim(13, tfsEndpoint(from)), pbLenDelim(14, tfsEndpoint(to))]);
+}
+
+/**
+ * Builds a shareable Google Flights deep link for the given search. Round trip
+ * emits two legs (outbound + reversed return); one-way emits a single leg and
+ * flags the trip type accordingly. Verified to restore origin, destination,
+ * both dates, passenger count, cabin and trip type on a cold load.
+ */
+export function buildGoogleFlightsUrl(params: SearchParams): string {
+  const legs: Buffer[] = [pbLenDelim(3, tfsLeg(params.departDate, params.origin, params.destination))];
+  if (params.returnDate) {
+    legs.push(pbLenDelim(3, tfsLeg(params.returnDate, params.destination, params.origin)));
+  }
+
+  // field 8 is a repeated passenger enum (1 = adult); emit one per adult.
+  const passengers: Buffer[] = [];
+  for (let i = 0; i < Math.max(1, params.adults); i++) {
+    passengers.push(pbVarintField(8, 1));
+  }
+
+  const tfs = Buffer.concat([
+    pbVarintField(2, 2), // top-level constant, matches Google's own encoding
+    ...legs, // field 3 (repeated): flight legs
+    ...passengers, // field 8 (repeated): one per adult
+    pbVarintField(9, SEAT_CODE[params.cabin]), // seat/cabin class
+    pbVarintField(19, params.returnDate ? 1 : 2), // trip type: 1 = round trip, 2 = one way
+  ]);
+
+  // base64url chars (A-Za-z0-9-_) are all URL-safe, so no extra encoding needed.
+  // hl/gl/curr force the US English + USD edition (see searchGoogleFlights).
+  return `https://www.google.com/travel/flights/search?tfs=${tfs.toString("base64url")}&hl=en&gl=us&curr=USD`;
 }
