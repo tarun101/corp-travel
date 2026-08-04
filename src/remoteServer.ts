@@ -7,7 +7,7 @@ import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
 import { z } from "zod";
 import { resolve } from "node:path";
 import type { Request, Response } from "express";
-import { searchGoogleFlights } from "./googleFlights.js";
+import { buildGoogleFlightsUrl, searchGoogleFlights } from "./googleFlights.js";
 import { evaluateFlightAgainstPolicy, loadPolicy, PolicySchema, type Policy } from "./policy.js";
 import { loadPreferences, parsePreferences, PreferencesSchema, type Preferences } from "./preferences.js";
 import { rankFlights, type RankedFlight } from "./scoring.js";
@@ -194,7 +194,10 @@ function getServer(): McpServer {
         const preferences = preferencesOverride ? parsePreferences(preferencesOverride) : loadDefaultPreferences();
 
         const flights = await withTimeout(searchGoogleFlights(page, params), SEARCH_TIMEOUT_MS, "Flight search");
-        const googleFlightsUrl = page.url();
+        // Build a clean, self-contained deep link from the search params rather than
+        // reusing page.url() — the live page's tfs carries ephemeral in-app state that
+        // a cold load can't parse (see buildGoogleFlightsUrl for details).
+        const googleFlightsUrl = buildGoogleFlightsUrl(params);
 
         const evaluations = flights.map((f) => evaluateFlightAgainstPolicy(f, policy));
         const ranked = rankFlights(evaluations, preferences);
